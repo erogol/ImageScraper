@@ -103,9 +103,12 @@ class ImageScraper(object):
             from pyvirtualdisplay import Display
             display = Display(visible=0, size=(800, 600))
             display.start()
-
-            driver = selenium.webdriver.PhantomJS(
-                service_log_path=os.path.devnull)
+            try:
+                driver = selenium.webdriver.Chrome(
+                    service_log_path=os.path.devnull)
+            except:
+                driver = selenium.webdriver.Firefox(
+                    service_log_path=os.path.devnull)
             driver.get(self.url)
             page_html = driver.page_source
             page_url = driver.current_url
@@ -113,7 +116,12 @@ class ImageScraper(object):
             iframes = driver.find_elements_by_tag_name('iframe')
 
             for iframe in iframes:
-                driver_sub = selenium.webdriver.Chrome()
+                try:
+                    driver_sub = selenium.webdriver.Chrome(
+                        service_log_path=os.path.devnull)
+                except:
+                    driver_sub = selenium.webdriver.Firefox(
+                        service_log_path=os.path.devnull)
                 if iframe.get_attribute('src') is None:
                     continue
                 else:
