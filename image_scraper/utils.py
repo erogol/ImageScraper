@@ -12,7 +12,6 @@ import re
 from .exceptions import PageLoadError, DirectoryAccessError,\
                         DirectoryCreateError, ImageDownloadError, ImageSizeError
 
-
 class ImageScraper(object):
     """ Scraper class. """
     def __init__(self):
@@ -101,11 +100,29 @@ class ImageScraper(object):
             self.url = urljoin("http://", self.url)
             import selenium
             import selenium.webdriver
+            from pyvirtualdisplay import Display
+            display = Display(visible=0, size=(800, 600))
+            display.start()
+
             driver = selenium.webdriver.PhantomJS(
                 service_log_path=os.path.devnull)
             driver.get(self.url)
             page_html = driver.page_source
             page_url = driver.current_url
+
+            iframes = driver.find_elements_by_tag_name('iframe')
+
+            for iframe in iframes:
+                driver_sub = selenium.webdriver.Chrome()
+                if iframe.get_attribute('src') is None:
+                    continue
+                else:
+                    print "Requesting iframe page..."
+                    iframe_url = iframe.get_attribute('src')
+                    driver_sub.get(iframe_url)
+                    page_html += driver_sub.page_source
+                driver_sub.quit()
+
             driver.quit()
         else:
             if self.proxy_url:
@@ -135,6 +152,7 @@ class ImageScraper(object):
         """ Gets list of images from the page_html. """
         tree = html.fromstring(self.page_html)
         img = tree.xpath('//img/@src')
+        img += tree.xpath('//video/@poster')
         links = tree.xpath('//a/@href')
         img_list = self.process_links(img)
         img_links = self.process_links(links)
